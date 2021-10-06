@@ -1,0 +1,23 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Condition
+metadata:
+  name: action-check
+spec:
+  params:
+    - name: event_action
+      type: string
+  resources:
+    - name: ubi
+      type: image
+  check:
+    image: $(resources.inputs.ubi.url)
+    securityContext:
+      privileged: true
+    script: |
+      ACTION="opened reopened synchronize created"
+      echo $(params.event_action)
+      if echo $ACTION | grep -w $(params.event_action) > /dev/null; then
+          exit 0
+      else
+          exit 1
+      fi

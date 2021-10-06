@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - configuration-task.yaml
+  - custom-pipeline.yaml
+  - deploy-manifests.yaml
+  - discover-route.yaml
+  - gather-and-provide-metrics.yaml
+  - gather-metrics-check-inputs.yaml
+  - gather-metrics-clean-task.yaml
+  - gather-metrics-configuration.yaml
+  - init-task.yaml
+  - issue-deploy-task.yaml
+  - issue-pypi-release-task.yaml
+  - issue-pulp-pypi-release-task.yaml
+  - issue-release-task.yaml
+  - overlay-build-task.yaml
+  - overlay-deploy-task.yaml
+  - overlays-pipeline.yaml
+  - pr-build-release.yaml
+  - pr-build.yaml
+  - pr-config.yaml
+  - pr-merge.yaml
+  - pre-commit-check.yaml
+  - pre-commit-py38-check.yaml
+  - pytest-checks.yaml
+  - pytest-py38-checks.yaml
+  - repo-upstream-sync.yaml
+  - resource.yaml
+  - status-task.yaml
+  - tag-build.yaml
+  - tag-check.yaml
+  - tag-deploy-task.yaml
+  - tag-release-task.yaml
+  - tag-sibling.yaml
+  - tox-checks.yaml
+  - upload-pulp-pypi.yaml
+  - upload-pypi.yaml
+  - z-stream-release-task.yaml
+  - z-stream-update-rhods-task.yaml
