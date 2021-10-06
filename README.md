@@ -4,7 +4,7 @@ A collection of Helm Charts to that are not available in any upstream location o
 
 ## 🧰 Add this Helm Repo to your local 🧰
 ```
-helm repo add thoth-station https://thoth-station.github.io/helm-charts
+helm repo add thoth-station https://thoth-station.ninja/helm-charts/ 
 ```
 
 ## 🏃‍♀️💨 How do I run a chart?
