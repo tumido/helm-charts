@@ -5,7 +5,7 @@ description: a set of Tekton pipelines
 type: application
 
 version: 0.1.0
-appVersion: "1.0.0"
+appVersion: "0.1.0"
 
 sources: 
   - https://github.com/AICoE/aicoe-ci
