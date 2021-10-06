@@ -1,0 +1,7 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: test-pipe
+  namespace: {{ .Release.Namespace }}
+spec:
+  tasks:
