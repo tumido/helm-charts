@@ -1,0 +1,309 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: issue-release
+spec:
+  params:
+    # buildah params
+    - name: PATH_CONTEXT
+      default: .
+      description: The location of the path to run s2i from.
+    - name: TLSVERIFY
+      default: "false"
+      description:
+        Verify the TLS on the registry endpoint (for push/pull to a non-TLS
+        registry)
+    - name: LOGLEVEL
+      description: Log level when running the S2I binaryx`x
+      default: "0"
+
+    # s2i thoth params
+    - name: ENABLE_PIPENV
+      description: Set this variable to use Pipenv.
+      default: "1"
+    - name: THOTH_ADVISE
+      description: Advise the recommended stack by Thoth.
+      default: "0"
+    - name: THOTH_ERROR_FALLBACK
+      description: Fallback to the lock file present in the repository if the submitted Thoth analysis fails.
+      default: "1"
+    - name: THOTH_DRY_RUN
+      description: Submit stack to Thoth, but do not use the recommended one.
+      default: "1"
+    - name: "THAMOS_DEBUG"
+      description: "Thamos enable debug mode."
+      default: "0"
+    - name: "THAMOS_VERBOSE"
+      description: Run thamos in verbose mode.
+      default: "1"
+    - name: THOTH_PROVENANCE_CHECK
+      description: Provenance check is verify the stack.
+      default: "0"
+    - name: THAMOS_NO_PROGRESSBAR
+      description: Disable progressbar for thamos.
+      default: "1"
+
+    # tag params
+    - name: event_action
+      description: Action of Issue.
+    - name: issue_number
+      description: Issue number.
+    - name: issue_state
+      description: State of the Issue.
+    - name: issue_title
+      description: Title of the Issue.
+    - name: issue_body
+      description: Body of the Issue.
+    - name: issue_author_association
+      description: Author association of the Issue.
+    - name: issue_author
+      description: Author of the Issue.
+    - name: repo_name
+      description: The git repository issue was raised in.
+    - name: repo_full_name
+      description: The git repository full name.
+    - name: repo_url
+      description: The git repository url
+    - name: base_image
+      description: Base image to be used.
+      default: "quay.io/thoth-station/s2i-thoth-ubi8-py36:latest"
+    - name: dockerfile_path
+      description: dockerfile path to be used for builds.
+      default: ""
+    - name: build_stratergy
+      description: stratergy with which image is to build.
+      default: ""
+    - name: build_source_script
+      description: Specify a URL for the assemble, assemble-runtime and run scripts
+      default: ""
+    - name: registry
+      description: Container image registry.
+      default: "quay.io"
+    - name: registry_org
+      description: Name of the registry organization.
+      default: "thoth-station"
+    - name: registry_project
+      description: Name of the project repository.
+      default: ""
+    - name: registry_secret
+      description: Registry image push secret.
+      default: "thoth-station-thoth-pusher-secret"
+  resources:
+    inputs:
+      - name: s2i-thoth
+        type: image
+      - name: repo
+        type: git
+      - name: ubi
+        type: image
+
+  steps:
+    - name: check-ops
+      image: $(resources.inputs.s2i-thoth.url)
+      securityContext:
+        privileged: true
+      script: |
+        if [ -z "$(params.registry_project)" ]; then
+          registry_repo=$(params.repo_name)
+        else
+          registry_repo=$(params.registry_project)
+        fi
+        if [ "$(params.registry)" == "quay.io" ]; then
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' "https://quay.io/api/v1/repository/$(params.registry_org)/$registry_repo")
+          if [ $STATUS -eq 200 ]; then
+              exit 0
+          else
+              exit 1
+          fi
+        else
+           exit 0
+        fi
+
+    - name: git-init-op
+      image: $(resources.inputs.s2i-thoth.url)
+      workingDir: /workspace/repo
+      securityContext:
+        privileged: true
+      script: |
+        set +ex
+        TAG=$(echo "$(params.issue_body)" | awk -F ':' '{print $2}')
+        set -x
+        git fetch origin --tags
+        git tag "${TAG//[[:space:]]/}"
+        git checkout "${TAG//[[:space:]]/}" -b workbranch
+
+    - name: generate
+      image: quay.io/openshift-pipeline/s2i:nightly
+      workingDir: /workspace/repo
+      securityContext:
+        privileged: true
+      script: |
+        if [ -z "$(params.build_stratergy)" ]; then
+          if [ -f Dockerfile ]; then
+            cp -rf . /gen-source/
+            mv /gen-source/Dockerfile /gen-source/Containerfile
+          elif [ -f Containerfile ]; then
+            cp -rf . /gen-source/
+          else
+            /usr/local/bin/s2i build \
+            $(params.PATH_CONTEXT) \
+            $(params.base_image) \
+            --env THAMOS_RUNTIME_ENVIRONMENT="" \
+            --env THOTH_ADVISE=$(params.THOTH_ADVISE) \
+            --env THOTH_ERROR_FALLBACK=$(params.THOTH_ERROR_FALLBACK) \
+            --env THOTH_DRY_RUN=$(params.THOTH_DRY_RUN) \
+            --env THAMOS_DEBUG=$(params.THAMOS_DEBUG) \
+            --env THAMOS_VERBOSE=$(params.THAMOS_VERBOSE) \
+            --env THOTH_PROVENANCE_CHECK=$(params.THOTH_PROVENANCE_CHECK) \
+            --loglevel=$(params.LOGLEVEL) \
+            --as-dockerfile /gen-source/Containerfile
+          fi
+        else
+          if [ "$(params.build_stratergy)" == "Dockerfile" ]; then
+            if [ -z "$(params.dockerfile_path)" ]; then
+              cp -rf . /gen-source/
+              mv /gen-source/Dockerfile /gen-source/Containerfile
+            else
+              cp -rf . /gen-source/
+              mv /gen-source/"$(params.dockerfile_path)" /gen-source/Containerfile
+            fi
+          elif [ "$(params.build_stratergy)" == "Containerfile" ]; then
+            cp -rf . /gen-source/
+          else
+            if [ -z "$(params.build_source_script)" ]; then
+              /usr/local/bin/s2i build \
+              $(params.PATH_CONTEXT) \
+              $(params.base_image) \
+              --env THAMOS_RUNTIME_ENVIRONMENT="" \
+              --env THOTH_ADVISE=$(params.THOTH_ADVISE) \
+              --env THOTH_ERROR_FALLBACK=$(params.THOTH_ERROR_FALLBACK) \
+              --env THOTH_DRY_RUN=$(params.THOTH_DRY_RUN) \
+              --env THAMOS_DEBUG=$(params.THAMOS_DEBUG) \
+              --env THAMOS_VERBOSE=$(params.THAMOS_VERBOSE) \
+              --env THOTH_PROVENANCE_CHECK=$(params.THOTH_PROVENANCE_CHECK) \
+              --env GIT_REPO_NAME=$(params.repo_name)  \
+              --loglevel=$(params.LOGLEVEL) \
+              --as-dockerfile /gen-source/Containerfile
+            else
+              /usr/local/bin/s2i build \
+              $(params.PATH_CONTEXT) \
+              $(params.base_image) \
+              --scripts-url=$(params.build_source_script) \
+              --assemble-user=root \
+              --assemble-runtime-user=root \
+              --loglevel=$(params.LOGLEVEL) \
+              --env GIT_REPO_NAME=$(params.repo_name)  \
+              --as-dockerfile /gen-source/Containerfile
+            fi
+          fi
+        fi
+      volumeMounts:
+        - mountPath: /gen-source
+          name: gen-source
+
+    - name: build
+      image: quay.io/buildah/stable
+      workingDir: /gen-source
+      securityContext:
+        privileged: true
+      script: |
+        buildah bud \
+        --storage-driver=overlay \
+        --tls-verify=$(params.TLSVERIFY) \
+        --layers \
+        -f \
+        /gen-source/Containerfile \
+        -t \
+        $(params.repo_name)-$(params.issue_number) \
+        .
+      volumeMounts:
+        - mountPath: /var/lib/containers
+          name: varlibcontainers
+        - mountPath: /gen-source
+          name: gen-source
+
+    - name: push
+      image: quay.io/buildah/stable
+      script: |
+        set +x
+        TAG=$(echo "$(params.issue_body)" | awk -F ':' '{print $2}')
+        set -x
+        if [ -z "$(params.registry_project)" ]; then
+          registry_repo=$(params.repo_name)
+        else
+          registry_repo=$(params.registry_project)
+        fi
+        buildah push \
+        --authfile=/pushsecret/.dockerconfigjson \
+        --tls-verify=$(params.TLSVERIFY) \
+        $(params.repo_name)-$(params.issue_number) \
+        docker://$(params.registry)/$(params.registry_org)/$registry_repo:"${TAG//[[:space:]]/}"
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: varlibcontainers
+          mountPath: /var/lib/containers
+        - name: quay-creds
+          mountPath: /pushsecret/
+          readOnly: true
+
+    - name: comment-on-issue
+      env:
+        - name: GITHUBTOKEN
+          valueFrom:
+            secretKeyRef:
+              name: auth-secret
+              key: token
+        - name: ISSUENUMBER
+          value: $(params.issue_number)
+        - name: REPOFULLNAME
+          value: $(params.repo_full_name)
+      image: $(resources.inputs.ubi.url)
+      script: |
+        #!/usr/libexec/platform-python
+        import json
+        import os
+        import http.client
+
+        status_url = "/repos/{}/issues/{}/comments".format(os.getenv('REPOFULLNAME'),os.getenv('ISSUENUMBER'))
+        issue_tag = """$(params.issue_body)""".split(":")[-1].strip()
+        registry_repo="$(params.registry_project)" if "$(params.registry_project)" else "$(params.repo_name)"
+        issue_body = "Successfully built and delivered the image.\nImage can be found at:[$(params.registry)/$(params.registry_org)/{}:{}](https://$(params.registry)/$(params.registry_org)/{}:{})".format(registry_repo,issue_tag,registry_repo,issue_tag)
+        data = {
+            "body": issue_body
+        }
+
+        conn = http.client.HTTPSConnection("api.github.com")
+        r = conn.request(
+            "POST",
+            status_url,
+            body=json.dumps(data),
+            headers={
+                "User-Agent": "aicoe-ci",
+                "Authorization": "Bearer " + os.environ["GITHUBTOKEN"],
+            })
+        resp = conn.getresponse()
+        if not str(resp.status).startswith("2"):
+            print("Error: %d" % (resp.status))
+            print(resp.read())
+        else:
+            print(resp.read())
+            data = {
+                "state": "closed"
+            }
+            r = conn.request(
+                "PATCH",
+                "/repos/{}/issues/{}".format(os.getenv('REPOFULLNAME'),os.getenv('ISSUENUMBER')),
+                body=json.dumps(data),
+                headers={
+                    "User-Agent": "aicoe-ci",
+                    "Authorization": "Bearer " + os.environ["GITHUBTOKEN"],
+                })
+  volumes:
+    - name: varlibcontainers
+      emptyDir: {}
+    - name: gen-source
+      emptyDir: {}
+    - name: quay-creds
+      secret:
+        secretName: $(params.registry_secret)

@@ -1,6 +1,7 @@
 apiVersion: v2
 name: meteor-pipelines
 description: a set of Tekton pipelines
+icon: https://avatars.githubusercontent.com/u/33906690?v=4
 
 type: application
 
