@@ -3,9 +3,9 @@ entries:
   meteor-pipelines:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: "2021-10-06T11:29:04.335637246+02:00"
+    created: "2021-10-06T11:39:42.405410601+02:00"
     description: a set of Tekton pipelines
-    digest: b63c4fe51365f465deebe3d9f0a22382cd844e24f144c6b1212d030c9e87b10a
+    digest: a7b53f60bab112b1e254008b38c6d842484ae8962f27e59b62d5377f43d05fa4
     keywords:
     - AICoE
     - Project Thoth
@@ -21,6 +21,6 @@ entries:
     - https://github.com/AICoE/aicoe-ci
     type: application
     urls:
-    - https://thoth-station.ninja/helm-charts/meteor-pipelines-0.1.0.tgz
+    - meteor-pipelines-0.1.0.tgz
     version: 0.1.0
-generated: "2021-10-06T11:29:04.335310897+02:00"
+generated: "2021-10-06T11:39:42.404905633+02:00"
