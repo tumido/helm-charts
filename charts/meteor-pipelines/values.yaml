@@ -1,9 +1,15 @@
 # Default values for meteor-pipelines.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
-github-username: sesheta
-github-token: "..."
-github-webhook-secret: "..."
-quay-dockerconfigjson: "{}"
-pypi-username: sesheta
-pypi-password: "..."
+github:
+  username: sesheta
+  token: token
+  webhooksecret: password 
+quay:
+  registry: quay.io
+  username: someone
+  password: password 
+  email: someone@example.com
+pypi:
+  username: sesheta
+  password: password 
