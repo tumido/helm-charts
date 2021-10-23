@@ -1,5 +1,5 @@
 apiVersion: v2
-name: meteor-pipelines
+name: thoth-pipelines
 description: a set of Tekton pipelines
 icon: https://avatars.githubusercontent.com/u/33906690?v=4
 
@@ -8,7 +8,7 @@ type: application
 version: 0.1.0
 appVersion: "0.1.0"
 
-sources: 
+sources:
   - https://github.com/AICoE/aicoe-ci
 
 keywords:
@@ -16,9 +16,9 @@ keywords:
   - Project Thoth
   - Open Data Hub
   - Operate First
-  - OpenShift Pipelines 
-  - Data Science 
+  - OpenShift Pipelines
+  - Data Science
 
 maintainers:
   - email: goern@redhat.com
-    name: Christoph Görn 
+    name: Christoph Görn

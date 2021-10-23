@@ -1,9 +1,10 @@
+{{/* vim: set filetype=mustache: */}}
+---
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: EventListener
 metadata:
   name: aicoe-ci-listener
-  labels:
-    app: aicoe-ci
+  labels: {{- include "meteor-pipelines.labels" . | nindent 4 }}
 spec:
   serviceAccountName: aicoe-ci-webhook
   triggers:
@@ -67,7 +68,7 @@ spec:
             filter: "body.ref_type == 'tag'"
       bindings:
         - kind: TriggerBinding
-          ref: git-tag-binding
+          ref: git-tag
       template:
         ref: git-tag-template
 
@@ -104,26 +105,9 @@ spec:
       template:
         ref: git-issue-template
 
-    # z-stream release pipeline for operate-first
-    - name: odh-z-stream-release
-      interceptors:
-        - github:
-            secretRef:
-              secretName: github-secret
-              secretKey: webhooksecret
-            eventTypes:
-              - create
-        - cel:
-            filter: "(body.ref_type == 'tag') && (body.repository.full_name == 'opendatahub-io/odh-manifests')"
-      bindings:
-        - kind: TriggerBinding
-          ref: z-stream-release-binding
-      template:
-        ref: z-stream-release-template
-
     - name: webhook-tag-release
       bindings:
         - kind: TriggerBinding
-          ref: webhook-tag-binding
+          ref: github-tag
       template:
-        ref: git-tag-template
+        ref: git-tag

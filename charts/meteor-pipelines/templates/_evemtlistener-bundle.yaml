@@ -1,0 +1,272 @@
+{{/* vim: set filetype=mustache: */}}
+{{- define "meteor-pipeline.eventlistener" -}}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: meteor-pipelines-github
+  labels: {{- include "meteor-pipelines.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  secretToken: secretTokenSauce 
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: dings
+  labels: {{- include "meteor-pipelines.labels" . | nindent 4 }}
+spec:
+  triggers:
+    - name: github-pull-request
+      interceptors:
+        - ref:
+            name: github
+          params:
+            - name: secretRef
+              value:
+                secretName: meteor-pipelines-github
+                secretKey: secretToken
+            - name: "eventTypes"
+              value: ["pull_request"]
+        - name: "only when PRs are opened"
+          ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: "body.action in ['opened', 'synchronize', 'reopened']"
+      bindings:
+        - ref: github-pr
+      template:
+        ref: github-pr
+    - name: github-tag-release
+      interceptors:
+        - ref:
+            name: github
+          params:
+            - name: secretRef
+              value:
+                secretName: meteor-pipelines-github
+                secretKey: secretToken
+            - name: "eventTypes"
+              value: ["create"]
+        - name: "only when a Tag is created" 
+          ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              value: "body.ref_type == 'tag'"
+      bindings:
+        - kind: TriggerBinding
+          ref: git-tag
+      template:
+        ref: git-tag-template
+  resources:
+    kubernetesResource:
+      spec:
+        template:
+          spec:
+            serviceAccountName: meteor-pipelines 
+            containers:
+              - resources:
+                  requests:
+                    memory: "64Mi"
+                    cpu: "250m"
+                  limits:
+                    memory: "128Mi"
+                    cpu: "500m"
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: github-pr
+  labels: {{- include "meteor-pipelines.labels" . | nindent 4 }}
+spec:
+  params:
+    - name: event_action
+      value: $(body.action)
+    - name: pr_number
+      value: $(body.number)
+    - name: repo_name
+      value: $(body.repository.name)
+    - name: repo_full_name
+      value: $(body.repository.full_name)
+    - name: pr_url
+      value: $(body.pull_request.html_url)
+    - name: repo_url
+      value: $(body.repository.html_url)
+    - name: default_branch
+      value: $(body.repository.default_branch)
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: github-tag
+  labels: {{- include "meteor-pipelines.labels" . | nindent 4 }}
+spec:
+  params:
+    - name: git_ref
+      value: $(body.ref)
+    - name: git_ref_type
+      value: $(body.ref_type)
+    - name: repo_name
+      value: $(body.repository.name)
+    - name: repo_url
+      value: $(body.repository.html_url)
+    - name: default_branch
+      value: $(body.repository.default_branch)
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: github-pr
+  labels: {{- include "meteor-pipelines.labels" . | nindent 4 }}
+spec:
+  params:
+    - name: pr_number
+      description: Pull request ID.
+    - name: repo_name
+      description: The git repository pr was raised to.
+    - name: repo_full_name
+      description: The git repository full name.
+    - name: pr_url
+      description: The pr url.
+    - name: repo_url
+      description: The git repository url.
+    - name: default_branch
+      description: The git repository default branch.
+    - name: event_action
+      description: Action performed on Pull request.
+      default: "DEFAULT"
+    - name: pr_comment
+      description: comment on the pull request.
+      default: "DEFAULT"
+    - name: pr_comment_author
+      description: author of the comment on the pull request.
+      default: "DEFAULT"
+    - name: pr_comment_author_association
+      description: comment author's association.
+      default: "DEFAULT"
+    - name: pipelinerun_name
+      description: pipelinerun associated.
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        name: meteor-pipelinerun-$(uid)
+        labels:
+          labels: {{- include "meteor-pipelines.labels" . | nindent 10 }}
+          pipelines.meteor.zone/project: $(tt.params.repo_name)
+          pipelines.meteor.zone/source-change-ref: $(tt.params.repo_name)-pr-$(tt.params.pr_number)
+      spec:
+        serviceAccountName: meteor-pipelines
+        pipelineRef:
+          name: pull-request-pipeline
+        params:
+          - name: event_action
+            value: $(tt.params.event_action)
+          - name: pr_number
+            value: $(tt.params.pr_number)
+          - name: repo_name
+            value: $(tt.params.repo_name)
+          - name: repo_url
+            value: $(tt.params.repo_url)
+          - name: repo_full_name
+            value: $(tt.params.repo_full_name)
+          - name: pr_comment
+            value: $(tt.params.pr_comment)
+          - name: pr_comment_author
+            value: $(tt.params.pr_comment_author)
+          - name: pr_comment_author_association
+            value: $(tt.params.pr_comment_author_association)
+          - name: pipelinerun_name
+            value: meteor-pipelinerun-$(uid)
+        resources:
+          - name: git-repo
+            resourceSpec:
+              type: git
+              params:
+                - name: revision
+                  value: $(tt.params.default_branch)
+                - name: url
+                  value: $(tt.params.repo_url)
+          - name: s2i-thoth
+            resourceRef:
+              name: meteor-s2i
+          - name: ubi
+            resourceRef:
+              name: ubi8
+          - name: pr-source
+            resourceSpec:
+              type: pullRequest
+              params:
+                - name: url
+                  value: $(tt.params.pr_url)
+              secrets:
+                - fieldName: authToken
+                  secretName: auth-secret
+                  secretKey: token
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: github-tag
+  labels: {{- include "meteor-pipelines.labels" . | nindent 4 }}
+spec:
+  params:
+    - name: git_ref
+      description: Git reference value.
+    - name: git_ref_type
+      description: Type of ref Tag or Branch.
+    - name: repo_name
+      description: The git repository title.
+    - name: repo_url
+      description: The git repository url.
+    - name: default_branch
+      description: The git repository default branch.
+    - name: pipelinerun_name
+      description: pipelinerun associated.
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        name: tag-release-$(uid)
+        labels:
+          labels: {{- include "meteor-pipelines.labels" . | nindent 10 }}
+          pipelines.meteor.zone/project: $(tt.params.repo_name)
+          pipelines.meteor.zone/source-change-ref: $(tt.params.repo_name)-tag-$(tt.params.git_ref)
+      spec:
+        serviceAccountName: meteor-pipelines
+        timeout: "2h"
+        pipelineRef:
+          name: tag-release-pipeline
+        params:
+          - name: git_ref
+            value: $(tt.params.git_ref)
+          - name: git_ref_type
+            value: $(tt.params.git_ref_type)
+          - name: repo_name
+            value: $(tt.params.repo_name)
+          - name: repo_url
+            value: $(tt.params.repo_url)
+          - name: default_branch
+            value: $(tt.params.default_branch)
+          - name: uid
+            value: $(uid)
+          - name: pipelinerun_name
+            value: tag-release-$(uid)
+        resources:
+          - name: git-repo
+            resourceSpec:
+              type: git
+              params:
+                - name: revision
+                  value: $(tt.params.default_branch)
+                - name: url
+                  value: $(tt.params.repo_url)
+          - name: s2i-thoth
+            resourceRef:
+              name: thoth-s2i
+          - name: ubi
+            resourceRef:
+              name: ubi8
+{{- end -}}

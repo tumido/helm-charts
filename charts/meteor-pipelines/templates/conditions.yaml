@@ -1,0 +1,344 @@
+{{/* vim: set filetype=mustache: */}}
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Condition
+metadata:
+  name: action-check
+  labels: {{- include "meteor-pipelines.labels" . | nindent 2 }}
+spec:
+  params:
+    - name: event_action
+      type: string
+  resources:
+    - name: ubi
+      type: image
+  check:
+    image: $(resources.inputs.ubi.url)
+    securityContext:
+      privileged: true
+    script: |
+      ACTION="opened reopened synchronize created"
+      echo $(params.event_action)
+      if echo $ACTION | grep -w $(params.event_action) > /dev/null; then
+          exit 0
+      else
+          exit 1
+      fi
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Condition
+metadata:
+  name: build-check
+  labels: {{- include "meteor-pipelines.labels" . | nindent 2 }}
+spec:
+  resources:
+    - name: repo
+      type: git
+  check:
+    image: quay.io/thoth-station/s2i-thoth-ubi8-py38:v0.32.0
+    workingDir: /workspace/repo
+    script: |
+      #!/usr/libexec/platform-python
+      import yaml
+      import os
+
+      if os.path.isfile('.aicoe-ci.yaml'):
+          with open(".aicoe-ci.yaml", "r") as stream:
+              conf = yaml.safe_load(stream)
+
+          if conf.get("build"):
+              exit(0)
+          else:
+              exit(1)
+      else:
+        print("Configuration file unavailable")
+        exit(1)
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Condition
+metadata:
+  name: custom-pipeline-check
+  labels: {{- include "meteor-pipelines.labels" . | nindent 2 }}
+spec:
+  resources:
+    - name: repo
+      type: git
+    - name: ubi
+      type: image
+  check:
+    image: quay.io/harshad16/yq:latest
+    workingDir: /workspace/repo
+    script: |
+      if [[ ! -f .aicoe-ci.yaml ]]; then
+        cat <<EOF > .aicoe-ci.yaml
+      EOF
+      fi
+      check_list=$(yq r -j .aicoe-ci.yaml check)
+      out=$(echo "$check_list" | grep -w "thoth-custom-build")
+      exit_code=$?
+      if [[ $exit_code -ne 0 ]]; then
+        exit 1
+      else
+        exit 0
+      fi
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Condition
+metadata:
+  name: config-check
+  labels: {{- include "meteor-pipelines.labels" . | nindent 2 }}
+spec:
+  params:
+    - name: event
+      type: string
+  resources:
+    - name: repo
+      type: git
+  check:
+    image: quay.io/thoth-station/s2i-thoth-ubi8-py38:v0.32.0
+    workingDir: /workspace/repo
+    script: |
+      #!/usr/libexec/platform-python
+      import yaml
+      import os
+
+      if os.path.isfile('.aicoe-ci.yaml'):
+          with open(".aicoe-ci.yaml", "r") as stream:
+              conf = yaml.safe_load(stream)
+
+          if "$(params.event)" in conf.get("check"):
+              exit(0)
+          else:
+              exit(1)
+      else:
+        print("Configuration file unavailable")
+        exit(1)
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Condition
+metadata:
+  name: deployment-check
+  labels: {{- include "meteor-pipelines.labels" . | nindent 2 }}
+spec:
+  resources:
+    - name: repo
+      type: git
+  check:
+    image: quay.io/thoth-station/s2i-thoth-ubi8-py38:v0.32.0
+    workingDir: /workspace/repo
+    script: |
+      #!/usr/libexec/platform-python
+      import yaml
+      import os
+
+      if os.path.isfile('.aicoe-ci.yaml'):
+          with open(".aicoe-ci.yaml", "r") as stream:
+              conf = yaml.safe_load(stream)
+
+          if conf.get("deploy"):
+              exit(0)
+          else:
+              exit(1)
+      else:
+        print("Configuration file unavailable")
+        exit(1)
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Condition
+metadata:
+  name: deploy-comment-check
+  labels: {{- include "meteor-pipelines.labels" . | nindent 2 }}
+spec:
+  params:
+    - name: pr_comment
+      type: string
+    - name: pr_comment_author_association
+      type: string
+  resources:
+    - name: ubi
+      type: image
+  check:
+    image: $(resources.inputs.ubi.url)
+    securityContext:
+      privileged: true
+    script: |
+      author_association="$(params.pr_comment_author_association)"
+      if ! { [ "$author_association" != "OWNER" -o "$author_association" != "MEMBER" ]; }; then
+          echo "Skipping PR, author is not an OWNER or MEMBER: $author"
+          exit 1
+      fi
+
+      if [ "$(params.pr_comment)" == "/deploy" ]; then
+          exit 0
+      else
+          exit 1
+      fi
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Condition
+metadata:
+  name: issue-check
+  labels: {{- include "meteor-pipelines.labels" . | nindent 2 }}
+spec:
+  params:
+    - name: issue_title
+      description: Type of Issue.
+    - name: issue_pipeline_title
+      description: Issue to be served by pipeline task.
+    - name: pipelinerun_name
+      description: pipelinerun associated.
+    - name: event_action
+      type: string
+  check:
+    image: quay.io/openshift/origin-cli:latest
+    script: |
+      if [ "$(params.issue_title)" == "$(params.issue_pipeline_title)" ]; then
+        exit 0
+      else
+        exit 1
+      fi
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Condition
+metadata:
+  name: overlays-pipeline-check
+  labels: {{- include "meteor-pipelines.labels" . | nindent 2 }}
+spec:
+  resources:
+    - name: repo
+      type: git
+    - name: ubi
+      type: image
+  check:
+    image: quay.io/thoth-station/s2i-thoth-ubi8-py38:v0.32.0
+    workingDir: /workspace/repo
+    script: |
+      #!/usr/libexec/platform-python
+      import yaml
+      import os
+
+      if os.path.isfile('.aicoe-ci.yaml'):
+          print("Configuration file available")
+          with open(".aicoe-ci.yaml", "r") as stream:
+              conf = yaml.safe_load(stream)
+
+          if "overlays-build" in conf.get("check"):
+              exit(0)
+          else:
+              exit(1)
+      else:
+        print("Configuration file unavailable")
+        exit(1)
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Condition
+metadata:
+  name: sibling-check
+  labels: {{- include "meteor-pipelines.labels" . | nindent 2 }}
+spec:
+  resources:
+    - name: repo
+      type: git
+  check:
+    image: quay.io/thoth-station/s2i-thoth-ubi8-py38:v0.32.0
+    workingDir: /workspace/repo
+    script: |
+      #!/usr/libexec/platform-python
+      import yaml
+      import os
+
+      if os.path.isfile('.aicoe-ci.yaml'):
+          with open(".aicoe-ci.yaml", "r") as stream:
+              conf = yaml.safe_load(stream)
+
+          if conf.get("sibling"):
+              exit(0)
+          else:
+              exit(1)
+      else:
+        exit(1)
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: tag-check
+  labels: {{- include "meteor-pipelines.labels" . | nindent 2 }}
+spec:
+  params:
+    - name: git_ref_type
+      description: Type of ref Tag or Branch.
+    - name: pipelinerun_name
+      description: pipelinerun associated.
+  steps:
+    - name: init-ops
+      image: quay.io/openshift/origin-cli:latest
+      script: |
+        if [ "$(params.git_ref_type)" == "tag" ]; then
+            exit 0
+        else
+          oc delete pipelinerun $(params.pipelinerun_name)
+        fi
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Condition
+metadata:
+  name: upload-pulp-pypi-check
+  labels: {{- include "meteor-pipelines.labels" . | nindent 2 }}
+spec:
+  resources:
+    - name: repo
+      type: git
+    - name: ubi
+      type: image
+  check:
+    image: quay.io/thoth-station/s2i-thoth-ubi8-py38:v0.32.0
+    workingDir: /workspace/repo
+    script: |
+      #!/usr/libexec/platform-python
+      import yaml
+      import os
+
+      if os.path.isfile('.aicoe-ci.yaml'):
+          with open(".aicoe-ci.yaml", "r") as stream:
+              conf = yaml.safe_load(stream)
+
+          for r in conf.get("package-upload", []):
+              if "pulp" == r["instance"]:
+                  exit(0)
+          exit(1)
+      else:
+        print("Configuration file unavailable")
+        exit(1)
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Condition
+metadata:
+  name: upload-pypi-check
+  labels: {{- include "meteor-pipelines.labels" . | nindent 2 }}
+spec:
+  resources:
+    - name: repo
+      type: git
+    - name: ubi
+      type: image
+  check:
+    image: quay.io/thoth-station/s2i-thoth-ubi8-py38:v0.32.0
+    workingDir: /workspace/repo
+    script: |
+      #!/usr/libexec/platform-python
+      import yaml
+      import os
+
+      if os.path.isfile('.aicoe-ci.yaml'):
+          with open(".aicoe-ci.yaml", "r") as stream:
+              conf = yaml.safe_load(stream)
+
+          for r in conf.get("package-upload", []):
+              if "pypi" == r["instance"]:
+                  exit(0)
+          if "upload-pypi-sesheta" in conf.get("release",[]):
+              exit(0)
+          exit(1)
+      else:
+        print("Configuration file unavailable")
+        exit(1)
