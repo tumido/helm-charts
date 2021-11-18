@@ -3,6 +3,29 @@ entries:
   meteor-pipelines:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2021-11-18T16:50:27.508710718Z"
+    description: a set of Tekton pipelines
+    digest: 9393a40fba73add6a2c5b8876f92b221b53ae51340ef5684d58a7b7d03156ed1
+    icon: https://avatars.githubusercontent.com/u/33906690?v=4
+    keywords:
+    - AICoE
+    - Project Thoth
+    - Open Data Hub
+    - Operate First
+    - OpenShift Pipelines
+    - Data Science
+    maintainers:
+    - email: goern@redhat.com
+      name: Christoph Görn
+    name: meteor-pipelines
+    sources:
+    - https://github.com/AICoE/aicoe-ci
+    type: application
+    urls:
+    - https://github.com/thoth-station/helm-charts/releases/download/meteor-pipelines-0.2.0/meteor-pipelines-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2021-10-06T09:43:51.604548203Z"
     description: a set of Tekton pipelines
     digest: 518e1e97510ee173968c6fb248525aad0e06b6aa9c2320161040a659ee0b4587
