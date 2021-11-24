@@ -151,7 +151,7 @@ spec:
       params:
         - name: script
           value: |
-            echo "http://$(oc get route $(context.pipelineRun.name) --template='{{ .spec.host }}')" > $(results.results.path)
+            echo "http://$(oc get route $(context.pipelineRun.name) --template='{{"{{"}} {{"."}}spec.host {{"}}"}}')" > $(results.results.path)
 
   finally:
     - name: push-metrics
