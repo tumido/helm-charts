@@ -3,7 +3,11 @@ apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
   name: jupyterbook
+  annotations:
+    meteor.zone/pipeline: "true"
+    shower.meteor.zone/button: Read docs with JupyterBook
 spec:
+  description: A static website generated via JupyterBook
   params:
     - name: url
       type: string
