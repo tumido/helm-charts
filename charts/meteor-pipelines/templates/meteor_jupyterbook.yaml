@@ -14,6 +14,8 @@ spec:
       default: ""
     - name: ownerReferences
       default: "[]"
+    - name: host
+      default: ""
 
   results:
     - name: url
@@ -68,6 +70,15 @@ spec:
         - name: namespace
           value: $(context.pipelineRun.namespace)
 
+    - name: resolve-persistent-host
+      taskRef:
+        name: resolve-persistent-host
+      params:
+        - name: host
+          value: $(params.host)
+        - name: url
+          value: $(params.url)
+
     - name: deploy
       taskRef:
         name: openshift-client
@@ -75,6 +86,7 @@ spec:
       runAfter:
         - buildah
         - resolve-owner-reference
+        - resolve-persistent-host
       params:
         - name: SCRIPT
           value: |
@@ -140,6 +152,7 @@ spec:
             oc patch deployment/$(context.pipelineRun.name) --type='merge' -p='$(tasks.resolve-owner-reference.results.patch)'
             oc patch service/$(context.pipelineRun.name) --type='merge' -p='$(tasks.resolve-owner-reference.results.patch)'
             oc patch route/$(context.pipelineRun.name) --type='merge' -p='$(tasks.resolve-owner-reference.results.patch)'
+            [ -n "$(tasks.resolve-persistent-host.results.fullhost)" ] && oc patch route/$(context.pipelineRun.name) --type='merge' -p='{"spec":{"host":"$(tasks.resolve-persistent-host.results.fullhost)"}}'
             oc patch imagestream/$(context.pipelineRun.name) --type='merge' -p='$(tasks.resolve-owner-reference.results.patch)'
             oc wait --for=condition=available --timeout=600s deployment/$(context.pipelineRun.name)
 
