@@ -8,7 +8,7 @@ metadata:
   labels: {{- include "meteor-pipelines.labels" . | nindent 4 }}
 type: Opaque
 stringData:
-  secretToken: secretTokenSauce 
+  secretToken: secretTokenSauce
 ---
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: EventListener
@@ -49,7 +49,7 @@ spec:
                 secretKey: secretToken
             - name: "eventTypes"
               value: ["create"]
-        - name: "only when a Tag is created" 
+        - name: "only when a Tag is created"
           ref:
             name: "cel"
           params:
@@ -65,7 +65,7 @@ spec:
       spec:
         template:
           spec:
-            serviceAccountName: meteor-pipelines 
+            serviceAccountName: meteor-pipelines
             containers:
               - resources:
                   requests:

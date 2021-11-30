@@ -4,7 +4,7 @@ A collection of Helm Charts to that are not available in any upstream location o
 
 ## 🧰 Add this Helm Repo to your local 🧰
 ```
-helm repo add thoth-station https://thoth-station.ninja/helm-charts/ 
+helm repo add thoth-station https://thoth-station.ninja/helm-charts/
 ```
 
 ## 🏃‍♀️💨 How do I run a chart?
@@ -27,7 +27,7 @@ helm install $NAME -f deployment-values.yaml thoth-station/$CHART_NAME
 
 ## 🏃‍♂️💨 Chart linting
 
-Before adding a chart to this repo, make sure there is no linting issues, otherwise the PR actions will fail. 
+Before adding a chart to this repo, make sure there is no linting issues, otherwise the PR actions will fail.
 We use both the integrated [`helm lint`](https://helm.sh/docs/helm/helm_lint/) command and the [`chart testing`](https://github.com/helm/chart-testing/blob/master/doc/ct_lint.md) tool.
 
 ```bash
