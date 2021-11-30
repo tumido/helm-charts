@@ -9,7 +9,7 @@ TODO min tekton version, or min openshift pipelines version, where do they have 
 
 ## Installation
 
-You deployment of the Thoth Pipelines needs some credentials: to push to a 
+You deployment of the Thoth Pipelines needs some credentials: to push to a
 container registry, to create issues and pull requests on GitHub or to publish
 Python modules to a Python Index.
 
@@ -20,15 +20,15 @@ echo <<EOT >deployment-values.yaml
 github:
   username: sesheta
   token: token
-  webhooksecret: password 
+  webhooksecret: password
 quay:
   registry: quay.io
   username: someone
-  password: password 
+  password: password
   email: someone@example.com
 pypi:
   username: sesheta
-  password: password 
+  password: password
 EOT
 ```
 
@@ -39,7 +39,7 @@ called `thoth-aidevsecops-pipelines`), this namespace will also be used for runn
 pipelines (and thus all the pods originated from tasks).
 
 ```bash
-helm repo add thoth-station https://thoth-station.ninja/helm-charts/ 
+helm repo add thoth-station https://thoth-station.ninja/helm-charts/
 oc new-project thoth-aidevsecops-pipelines
 helm install thoth-pipelines -f deployment-values.yaml thoth-station/meteor-pipelines
 ```
