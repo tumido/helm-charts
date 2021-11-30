@@ -27,6 +27,8 @@ spec:
 
   workspaces:
     - name: data
+    - name: sslcertdir
+      optional: true
 
   tasks:
     - name: git-clone
@@ -59,6 +61,8 @@ spec:
       workspaces:
         - name: data
           workspace: data
+        - name: sslcertdir
+          workspace: sslcertdir
       params:
         - name: IMAGE
           value: image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
