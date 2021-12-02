@@ -13,7 +13,7 @@ pypi:
   username: sesheta
   password: password
 
-eventlisteners: # we only support GitHub ATM
+eventlisteners:  # we only support GitHub ATM
   - thoth-station:
       github:
         webhooksecret: lameGitHubWebhookSecretToken
