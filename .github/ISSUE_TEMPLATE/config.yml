@@ -2,4 +2,4 @@ blank_issues_enabled: true
 contact_links:
   - name: Support
     url: https://github.com/thoth-station/support/issues
-    about: Ask the community for support
+    about: Ask the community for support, report bugs, or request new features
