@@ -3,7 +3,11 @@ apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
   name: jupyterbook
+  annotations:
+    meteor.zone/pipeline: "true"
+    shower.meteor.zone/button: Read docs with JupyterBook
 spec:
+  description: A static website generated via JupyterBook
   params:
     - name: url
       type: string
@@ -14,6 +18,8 @@ spec:
       default: ""
     - name: ownerReferences
       default: "[]"
+    - name: host
+      default: ""
 
   results:
     - name: url
@@ -21,6 +27,8 @@ spec:
 
   workspaces:
     - name: data
+    - name: sslcertdir
+      optional: true
 
   tasks:
     - name: git-clone
@@ -53,6 +61,8 @@ spec:
       workspaces:
         - name: data
           workspace: data
+        - name: sslcertdir
+          workspace: sslcertdir
       params:
         - name: IMAGE
           value: image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
@@ -68,6 +78,15 @@ spec:
         - name: namespace
           value: $(context.pipelineRun.namespace)
 
+    - name: resolve-persistent-host
+      taskRef:
+        name: resolve-persistent-host
+      params:
+        - name: host
+          value: $(params.host)
+        - name: url
+          value: $(params.url)
+
     - name: deploy
       taskRef:
         name: openshift-client
@@ -75,6 +94,7 @@ spec:
       runAfter:
         - buildah
         - resolve-owner-reference
+        - resolve-persistent-host
       params:
         - name: SCRIPT
           value: |
@@ -140,6 +160,7 @@ spec:
             oc patch deployment/$(context.pipelineRun.name) --type='merge' -p='$(tasks.resolve-owner-reference.results.patch)'
             oc patch service/$(context.pipelineRun.name) --type='merge' -p='$(tasks.resolve-owner-reference.results.patch)'
             oc patch route/$(context.pipelineRun.name) --type='merge' -p='$(tasks.resolve-owner-reference.results.patch)'
+            [ -n "$(tasks.resolve-persistent-host.results.fullhost)" ] && oc patch route/$(context.pipelineRun.name) --type='merge' -p='{"spec":{"host":"$(tasks.resolve-persistent-host.results.fullhost)"}}'
             oc patch imagestream/$(context.pipelineRun.name) --type='merge' -p='$(tasks.resolve-owner-reference.results.patch)'
             oc wait --for=condition=available --timeout=600s deployment/$(context.pipelineRun.name)
 

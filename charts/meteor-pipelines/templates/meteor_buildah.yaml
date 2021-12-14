@@ -67,6 +67,8 @@ spec:
   results:
     - name: IMAGE_DIGEST
       description: Digest of the image just built.
+    - name: IMAGE_URL
+      description: URL  of the built Image.
 
   steps:
     - image: $(params.BUILDER_IMAGE)
@@ -84,7 +86,8 @@ spec:
         touch .tekton_metrics/images
         start=`date +%s`
 
-        buildah --storage-driver=$(params.STORAGE_DRIVER) bud \
+        [[ "$(workspaces.sslcertdir.bound)" == "true" ]] && CERT_DIR_FLAG="--cert-dir $(workspaces.sslcertdir.path)"
+        buildah ${CERT_DIR_FLAG}  --storage-driver=$(params.STORAGE_DRIVER) bud \
           $(params.BUILD_EXTRA_ARGS) --format=$(params.FORMAT) \
           --tls-verify=$(params.TLSVERIFY) --no-cache \
           -f $(params.DOCKERFILE) -t $(params.IMAGE) $(params.CONTEXT)
@@ -208,7 +211,8 @@ spec:
       script: |
         start=`date +%s`
 
-        buildah --storage-driver=$(params.STORAGE_DRIVER) push \
+        [[ "$(workspaces.sslcertdir.bound)" == "true" ]] && CERT_DIR_FLAG="--cert-dir $(workspaces.sslcertdir.path)"
+        buildah ${CERT_DIR_FLAG} --storage-driver=$(params.STORAGE_DRIVER) push \
           $(params.PUSH_EXTRA_ARGS) --tls-verify=$(params.TLSVERIFY) \
           --digestfile $(workspaces.data.path)/image-digest $(params.IMAGE) \
           docker://$(params.IMAGE)
@@ -269,7 +273,9 @@ spec:
     - name: digest-to-results
       image: $(params.BUILDER_IMAGE)
       workingDir: $(workspaces.data.path)
-      script: cat image-digest | tee /tekton/results/IMAGE_DIGEST
+      script: |
+        cat image-digest | tee /tekton/results/IMAGE_DIGEST
+        echo $(params.IMAGE) > /tekton/results/IMAGE_URL
 
   volumes:
     - name: varlibcontainers
