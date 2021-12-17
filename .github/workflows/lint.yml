@@ -32,13 +32,4 @@ jobs:
           fi
 
       - name: Run chart-testing (lint)
-        # TODO remove the --chart-dirs option
-        # added as a workaround for https://github.com/helm/chart-testing/issues/364
-        run: ct lint --config .chart-testing.yaml --chart-dirs charts/
-
-      - name: Create kind cluster
-        uses: helm/kind-action@v1.2.0
-        if: steps.list-changed.outputs.changed == 'true'
-
-      - name: Run chart-testing (install)
-        run: ct install --config .chart-testing.yaml
+        run: ct lint --config .chart-testing.yaml
