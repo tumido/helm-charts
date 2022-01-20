@@ -42,7 +42,7 @@ spec:
             project: $(params.repo_name)
             component: custom-build-pipeline
         spec:
-          serviceAccountName: aicoe-ci
+          serviceAccountName: pipeline
           pipelineRef:
             name: custom-pipeline
           params:

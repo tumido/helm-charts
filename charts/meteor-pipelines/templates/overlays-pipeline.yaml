@@ -43,7 +43,7 @@ spec:
             overlay: {overlay}
             component: custom-overlays-build-pipeline
         spec:
-          serviceAccountName: aicoe-ci
+          serviceAccountName: pipeline
           pipelineRef:
             name: overlays-release-pipeline
           params:
