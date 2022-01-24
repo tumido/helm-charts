@@ -29,7 +29,7 @@ spec:
           project: $(tt.params.pr_repo)
           component: $(tt.params.pr_repo)-pr-$(tt.params.pr_number)
       spec:
-        serviceAccountName: aicoe-ci
+        serviceAccountName: pipeline
         pipelineRef:
           name: "gather-deployment-metrics-pipeline"
         params:

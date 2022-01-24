@@ -43,7 +43,7 @@ spec:
           project: $(tt.params.repo_name)
           component: $(tt.params.repo_name)-issue-$(tt.params.issue_number)
       spec:
-        serviceAccountName: aicoe-ci
+        serviceAccountName: pipeline
         pipelineRef:
           name: issue-pipeline
         params:

@@ -65,7 +65,7 @@ spec:
       spec:
         template:
           spec:
-            serviceAccountName: meteor-pipelines
+            serviceAccountName: pipeline
             containers:
               - resources:
                   requests:
@@ -158,7 +158,7 @@ spec:
           pipelines.meteor.zone/project: $(tt.params.repo_name)
           pipelines.meteor.zone/source-change-ref: $(tt.params.repo_name)-pr-$(tt.params.pr_number)
       spec:
-        serviceAccountName: meteor-pipelines
+        serviceAccountName: pipeline
         pipelineRef:
           name: pull-request-pipeline
         params:
@@ -235,7 +235,7 @@ spec:
           pipelines.meteor.zone/project: $(tt.params.repo_name)
           pipelines.meteor.zone/source-change-ref: $(tt.params.repo_name)-tag-$(tt.params.git_ref)
       spec:
-        serviceAccountName: meteor-pipelines
+        serviceAccountName: pipeline
         timeout: "2h"
         pipelineRef:
           name: tag-release-pipeline

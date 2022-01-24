@@ -17,8 +17,8 @@ eventlisteners:  # we only support GitHub ATM
   - thoth-station:
       github:
         webhooksecret: lameGitHubWebhookSecretToken
-      serviceAccount: thoth-station-webhook
+      serviceAccount: pipeline
   - AICoE:
       github:
         webhooksecret: otherLameSecretToken
-      serviceAccount: aicoe-tekton-eventlistener
+      serviceAccount: pipeline
