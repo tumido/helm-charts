@@ -110,4 +110,4 @@ spec:
         - kind: TriggerBinding
           ref: github-tag
       template:
-        ref: git-tag
+        ref: git-tag-template
