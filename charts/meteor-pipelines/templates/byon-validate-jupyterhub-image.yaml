@@ -1,0 +1,47 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: byon-validate-jupyterhub-image
+spec:
+  params:
+   - name: url
+  results:
+   - name: python-runtime
+     description: Python runtime
+   - name: pip-packages
+     description: Packages installed in runtime
+   - name: message
+     description: Messages passed down from task
+  steps:
+    - name: jupyter-book-build
+      image: $(params.url)
+      script: |
+         #!/usr/bin/env bash
+
+         # Default values for easier handling when error occurs
+         echo -n "" > $(results.message.path)
+         echo -n "[]" > $(results.python-runtime.path)
+         echo -n "[]" > $(results.pip-packages.path)
+
+         # Check Python versionand
+         echo  "Validating image:"
+
+         # Check if Python was found, if not save that information to a message
+         if command -v python >/dev/null; then
+           version=$(python --version | cut -d ' ' -f 2)
+           echo -n  "[{\"name\":\"Python\",\"version\":\"$version\"}]" > $(results.python-runtime.path)
+           echo  "    Python:     $version"
+         else
+            echo "    Python:     Not available"
+            echo "{\"severity\":\"error\",\"message\":\"Python not found\"}" >> $(results.message.path)
+         fi
+
+         # Check if Pip was found, if not save that information to a message
+         if command -v pip >/dev/null; then
+            echo -n $(pip list --disable-pip-version-check --not-required --format json) > $(results.pip-packages.path)
+            echo -n  "    Packages:   "
+            echo $(pip list --disable-pip-version-check --not-required --format=freeze)
+         else
+            echo "    Packages:   Not available"
+            echo "{\"severity\":\"error\",\"message\":\"Pip not found\"}" >> $(results.message.path)
+         fi
