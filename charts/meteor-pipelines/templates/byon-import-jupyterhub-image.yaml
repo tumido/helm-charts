@@ -78,6 +78,7 @@ spec:
               #!/usr/bin/env bash
               echo -n "Creating output files... "
 
+              umask 0
               touch $(workspaces.data.path)/messages.ndjson
               echo -n "[]" > $(workspaces.data.path)/notebook-software.json
               echo -n "[]" > $(workspaces.data.path)/notebook-python-dependencies.json
