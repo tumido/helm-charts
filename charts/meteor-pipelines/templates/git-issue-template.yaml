@@ -46,6 +46,14 @@ spec:
         serviceAccountName: pipeline
         pipelineRef:
           name: issue-pipeline
+        workspaces:
+        - name: sslcertdir
+          configMap:
+            name: openshift-service-ca.crt
+            defaultMode: 420
+            items:
+            - key: service-ca.crt
+              path: ca.crt
         params:
           - name: event_action
             value: $(tt.params.event_action)

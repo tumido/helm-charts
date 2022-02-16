@@ -46,6 +46,14 @@ spec:
           serviceAccountName: pipeline
           pipelineRef:
             name: overlays-release-pipeline
+          workspaces:
+          - name: sslcertdir
+            configMap:
+              name: openshift-service-ca.crt
+              defaultMode: 420
+              items:
+              - key: service-ca.crt
+                path: ca.crt
           params:
             - name: git_ref
               value: $(params.git_ref)

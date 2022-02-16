@@ -35,6 +35,10 @@ spec:
     - name: pr-source
       type: pullRequest
 
+  workspaces:
+    - name: sslcertdir
+      optional: true
+
   tasks:
     - name: init-task-run
       taskRef:
@@ -349,6 +353,9 @@ spec:
     - name: pr-build-release-run
       taskRef:
         name: pr-build-release
+      workspaces:
+        - name: sslcertdir
+          workspace: sslcertdir
       conditions:
         - conditionRef: action-check
           params:

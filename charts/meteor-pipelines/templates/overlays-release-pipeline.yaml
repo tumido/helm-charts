@@ -53,10 +53,17 @@ spec:
     - name: s2i-thoth
       type: image
 
+  workspaces:
+    - name: sslcertdir
+      optional: true
+
   tasks:
     - name: overlay-release-run
       taskRef:
         name: overlay-build
+      workspaces:
+        - name: sslcertdir
+          workspace: sslcertdir
       params:
         - name: git_ref
           value: $(params.git_ref)

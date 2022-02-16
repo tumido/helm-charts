@@ -27,6 +27,10 @@ spec:
     - name: pr-source
       type: pullRequest
 
+  workspaces:
+    - name: sslcertdir
+      optional: true
+
   tasks:
     - name: gather-metrics-check-inputs
       taskRef:
@@ -67,6 +71,9 @@ spec:
     - name: pr-build-release-run
       taskRef:
         name: pr-build-release
+      workspaces:
+        - name: sslcertdir
+          workspace: sslcertdir
       params:
         - name: pr_number
           value: $(params.pr_number)

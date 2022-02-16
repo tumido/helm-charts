@@ -39,6 +39,10 @@ spec:
     - name: ubi
       type: image
 
+  workspaces:
+  - name: sslcertdir
+    optional: true
+
   tasks:
     - name: configuration
       taskRef:
@@ -53,6 +57,9 @@ spec:
     - name: issue-release-run
       taskRef:
         name: issue-release
+      workspaces:
+        - name: sslcertdir
+          workspace: sslcertdir
       conditions:
         - conditionRef: issue-check
           params:
@@ -163,6 +170,9 @@ spec:
     - name: issue-pypi-release-run
       taskRef:
         name: issue-pypi-release
+      workspaces:
+        - name: sslcertdir
+          workspace: sslcertdir
       conditions:
         - conditionRef: issue-check
           params:
@@ -213,6 +223,9 @@ spec:
     - name: issue-pulp-release-run
       taskRef:
         name: issue-pulp-pypi-release
+      workspaces:
+        - name: sslcertdir
+          workspace: sslcertdir
       conditions:
         - conditionRef: issue-check
           params:

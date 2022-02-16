@@ -42,7 +42,7 @@ spec:
       default: .
       description: The location of the path to run s2i from.
     - name: TLSVERIFY
-      default: "false"
+      default: "true"
       description:
         Verify the TLS on the registry endpoint (for push/pull to a non-TLS
         registry)
@@ -200,7 +200,9 @@ spec:
           memory: "2Gi"
           cpu: "2"
       script: |
+        [[ "$(workspaces.sslcertdir.bound)" == "true" ]] && CERT_DIR_FLAG="--cert-dir $(workspaces.sslcertdir.path)"
         buildah bud \
+        ${CERT_DIR_FLAG} \
         --storage-driver=overlay \
         --tls-verify=$(params.TLSVERIFY) \
         --layers \
@@ -218,12 +220,14 @@ spec:
     - name: push
       image: quay.io/buildah/stable
       script: |
+        [[ "$(workspaces.sslcertdir.bound)" == "true" ]] && CERT_DIR_FLAG="--cert-dir $(workspaces.sslcertdir.path)"
         if [ -z "$(params.registry_project)" ]; then
           registry_repo=$(params.repo_name)
         else
           registry_repo=$(params.registry_project)
         fi
         buildah push \
+        ${CERT_DIR_FLAG} \
         --authfile=/pushsecret/.dockerconfigjson \
         --tls-verify=$(params.TLSVERIFY) \
         $(params.repo_name)-$(params.git_ref) \
@@ -396,3 +400,8 @@ spec:
     - name: quay-creds
       secret:
         secretName: $(params.registry_secret)
+
+  workspaces:
+  - name: sslcertdir
+    optional: true
+    mountPath: /workspace/sslcertdir

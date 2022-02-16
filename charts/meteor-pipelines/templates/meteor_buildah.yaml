@@ -61,9 +61,10 @@ spec:
     - name: BASE_IMAGE
 
   workspaces:
-    - name: data
-    - name: sslcertdir
-      optional: true
+  - name: data
+  - name: sslcertdir
+    optional: true
+    mountPath: /workspace/sslcertdir
   results:
     - name: IMAGE_DIGEST
       description: Digest of the image just built.
@@ -280,3 +281,8 @@ spec:
   volumes:
     - name: varlibcontainers
       emptyDir: {}
+
+  workspaces:
+  - name: sslcertdir
+    optional: true
+    mountPath: /workspace/sslcertdir

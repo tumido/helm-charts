@@ -6,7 +6,7 @@ spec:
   params:
     # buildah params
     - name: TLSVERIFY
-      default: "false"
+      default: "true"
       description:
         Verify the TLS on the registry endpoint (for push/pull to a non-TLS
         registry)
@@ -77,7 +77,9 @@ spec:
       securityContext:
         privileged: true
       script: |
+        [[ "$(workspaces.sslcertdir.bound)" == "true" ]] && CERT_DIR_FLAG="--cert-dir $(workspaces.sslcertdir.path)"
         buildah bud \
+        ${CERT_DIR_FLAG} \
         --tls-verify=$(params.TLSVERIFY) \
         --storage-driver=overlay \
         --layers \
@@ -93,7 +95,9 @@ spec:
     - name: push
       image: quay.io/buildah/stable
       script: |
+        [[ "$(workspaces.sslcertdir.bound)" == "true" ]] && CERT_DIR_FLAG="--cert-dir $(workspaces.sslcertdir.path)"
         buildah push \
+        ${CERT_DIR_FLAG} \
         --authfile=/pushsecret/.dockerconfigjson \
         --tls-verify=$(params.TLSVERIFY) \
         $(params.repo_name)-$(params.git_ref) \
@@ -115,3 +119,8 @@ spec:
     - name: quay-creds
       secret:
         secretName: $(params.registry_secret)
+
+  workspaces:
+  - name: sslcertdir
+    optional: true
+    mountPath: /workspace/sslcertdir

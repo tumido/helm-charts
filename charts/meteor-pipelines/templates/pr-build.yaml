@@ -29,7 +29,7 @@ spec:
       default: .
       description: The location of the path to run s2i from.
     - name: TLSVERIFY
-      default: "false"
+      default: "true"
       description:
         Verify the TLS on the registry endpoint (for push/pull to a non-TLS
         registry)
