@@ -2,6 +2,8 @@ apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
   name: byon-import-jupyterhub-image
+  labels:
+    app.kubernetes.io/created-by: byon
 spec:
   params:
     - name: url
@@ -35,6 +37,7 @@ spec:
             echo "  Phase:             Validating"
             echo "  Message:           ''"
             echo "  Visibility:        false"
+            echo "  Origin:            Admin"
             echo
 
             oc apply -f - <<EOM
@@ -49,10 +52,12 @@ spec:
                 opendatahub.io/notebook-image-phase: Validating
                 opendatahub.io/notebook-image-url: $(params.url)
                 opendatahub.io/notebook-image-visible: 'false'
+                opendatahub.io/notebook-image-origin: Admin
               name: $(context.pipelineRun.name)
               namespace: $(context.pipelineRun.namespace)
               labels:
                 opendatahub.io/notebook-image: 'true'
+                app.kubernetes.io/created-by: byon
             spec:
               lookupPolicy:
                 local: true
@@ -159,10 +164,8 @@ spec:
               annotations:
                 opendatahub.io/notebook-image-message: |
                   $MESSAGES
-                opendatahub.io/notebook-image-phase: |
-                  $PHASE
-                opendatahub.io/notebook-image-visible: |
-                  $VISIBLE
+                opendatahub.io/notebook-image-phase: "$PHASE"
+                opendatahub.io/notebook-image-visible: "$VISIBLE"
             spec:
               tags:
                 - annotations:
