@@ -92,6 +92,7 @@ jobs:
               kubectl get namespace openshift-pipelines && sleep 5 && break
               sleep 5
           done
+          sleep 10 # FIXME: this is a hack; without it, the configmap below sometimes results empty
           kubectl create configmap config-trusted-cabundle \
               --from-file=ca-bundle.crt=/etc/ssl/certs/ca-certificates.crt \
               --dry-run=client -o yaml | \

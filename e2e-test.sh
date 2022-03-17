@@ -34,6 +34,8 @@ while : ; do
   kubectl get namespace openshift-pipelines && sleep 5 && break
   sleep 5
 done
+sleep 10 # FIXME: this is a hack; without it, the ConfigMap below sometimes results empty
+
 # NOTE: the path is for red hat based OSs
 kubectl create configmap config-trusted-cabundle \
         --from-file=ca-bundle.crt=/etc/pki/tls/certs/ca-bundle.crt \
