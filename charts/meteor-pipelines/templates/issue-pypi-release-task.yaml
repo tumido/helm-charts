@@ -72,7 +72,8 @@ spec:
               name: pypi-secret
               key: password
       script: |
-        twine upload dist/*
+        [[ "$(workspaces.sslcertdir.bound)" == "true" ]] && CERT_DIR_FLAG="--cert $(workspaces.sslcertdir.path)"
+        twine upload dist/* ${CERT_DIR_FLAG}
 
     - name: comment-on-issue
       env:
@@ -131,3 +132,7 @@ spec:
                     "User-Agent": "aicoe-ci",
                     "Authorization": "Bearer " + os.environ["GITHUBTOKEN"],
                 })
+  workspaces:
+  - name: sslcertdir
+    optional: true
+    mountPath: /workspace/sslcertdir

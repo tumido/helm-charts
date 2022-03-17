@@ -48,4 +48,10 @@ spec:
               name: pypi-secret
               key: password
       script: |
-        twine upload dist/*
+        [[ "$(workspaces.sslcertdir.bound)" == "true" ]] && CERT_DIR_FLAG="--cert-dir $(workspaces.sslcertdir.path)"
+        twine upload dist/* ${CERT_DIR_FLAG}
+
+  workspaces:
+  - name: sslcertdir
+    optional: true
+    mountPath: /workspace/sslcertdir

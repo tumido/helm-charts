@@ -59,4 +59,10 @@ spec:
               name: pulp-pypi-secret
               key: password
       script: |
-        twine upload dist/* --repository-url="http://pulp-test-thoth-pulp-experiments.apps.zero.massopen.cloud/pypi/$(params.pulp-index)/simple/"
+        [[ "$(workspaces.sslcertdir.bound)" == "true" ]] && CERT_DIR_FLAG="--cert $(workspaces.sslcertdir.path)"
+        twine upload dist/* --repository-url="http://pulp-test-thoth-pulp-experiments.apps.zero.massopen.cloud/pypi/$(params.pulp-index)/simple/" ${CERT_DIR_FLAG}
+
+  workspaces:
+  - name: sslcertdir
+    optional: true
+    mountPath: /workspace/sslcertdir

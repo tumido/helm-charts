@@ -29,6 +29,10 @@ spec:
     - name: ubi
       type: image
 
+  workspaces:
+    - name: sslcertdir
+      optional: true
+
   tasks:
     - name: configuration
       taskRef:
@@ -149,6 +153,9 @@ spec:
     - name: tag-release-run
       taskRef:
         name: tag-release
+      workspaces:
+        - name: sslcertdir
+          workspace: sslcertdir
       conditions:
         - conditionRef: build-check
           resources:
