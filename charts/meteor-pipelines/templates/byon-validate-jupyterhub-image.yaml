@@ -2,6 +2,8 @@ apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: byon-validate-jupyterhub-image
+  labels:
+    app.kubernetes.io/created-by: byon
 spec:
   params:
     - name: url
