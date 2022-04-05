@@ -15,6 +15,9 @@ spec:
     - name: desc
       description: Custom description
       type: string
+    - name: creator
+      description: Owner, user who requested the import
+      type: string
   workspaces:
     - name: data
 
@@ -34,6 +37,7 @@ spec:
             echo "  Image description: $(params.desc)"
             echo "  Image URL:         $(params.url)"
             echo
+            echo "  Creator:           $(params.creator)"
             echo "  Phase:             Validating"
             echo "  Message:           ''"
             echo "  Visibility:        false"
@@ -51,6 +55,7 @@ spec:
                 opendatahub.io/notebook-image-name: $(params.name)
                 opendatahub.io/notebook-image-phase: Validating
                 opendatahub.io/notebook-image-url: $(params.url)
+                opendatahub.io/notebook-image-creator: $(params.creator)
                 opendatahub.io/notebook-image-origin: Admin
               name: $(context.pipelineRun.name)
               namespace: $(context.pipelineRun.namespace)
