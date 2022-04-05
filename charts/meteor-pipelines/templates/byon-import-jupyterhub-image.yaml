@@ -51,12 +51,10 @@ spec:
                 opendatahub.io/notebook-image-name: $(params.name)
                 opendatahub.io/notebook-image-phase: Validating
                 opendatahub.io/notebook-image-url: $(params.url)
-                opendatahub.io/notebook-image-visible: 'false'
                 opendatahub.io/notebook-image-origin: Admin
               name: $(context.pipelineRun.name)
               namespace: $(context.pipelineRun.namespace)
               labels:
-                opendatahub.io/notebook-image: 'true'
                 app.kubernetes.io/created-by: byon
             spec:
               lookupPolicy:
@@ -165,7 +163,14 @@ spec:
                 opendatahub.io/notebook-image-message: |
                   $MESSAGES
                 opendatahub.io/notebook-image-phase: "$PHASE"
-                opendatahub.io/notebook-image-visible: "$VISIBLE"
+            EOM
+
+            [ "$VISIBLE" == "true" ] && cat <<EOM >> patch-file.yaml
+              labels:
+                opendatahub.io/notebook-image: 'true'
+            EOM
+
+            cat <<EOM >> patch-file.yaml
             spec:
               tags:
                 - annotations:
