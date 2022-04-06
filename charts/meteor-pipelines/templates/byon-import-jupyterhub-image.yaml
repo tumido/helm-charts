@@ -51,7 +51,7 @@ spec:
             metadata:
               annotations:
                 opendatahub.io/notebook-image-desc: $(params.desc)
-                opendatahub.io/notebook-image-message: ''
+                opendatahub.io/notebook-image-messages: ''
                 opendatahub.io/notebook-image-name: $(params.name)
                 opendatahub.io/notebook-image-phase: Validating
                 opendatahub.io/notebook-image-url: $(params.url)
@@ -165,7 +165,7 @@ spec:
             cat <<EOM > patch-file.yaml
             metadata:
               annotations:
-                opendatahub.io/notebook-image-message: |
+                opendatahub.io/notebook-image-messages: |
                   $MESSAGES
                 opendatahub.io/notebook-image-phase: "$PHASE"
             EOM

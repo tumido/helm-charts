@@ -26,7 +26,8 @@ spec:
           echo  "    Python:     $version"
         else
            echo "    Python:     Not available"
-           echo "{\"severity\":\"error\",\"message\":\"Python not found\"}" >> $(workspaces.data.path)/messages.ndjson
+           echo "{\"severity\":\"warning\",\"message\":\"Python not found, skipping further verification\"}" >> $(workspaces.data.path)/messages.ndjson
+           exit 1
         fi
 
         # Check if Pip was found, if not save that information to a message
