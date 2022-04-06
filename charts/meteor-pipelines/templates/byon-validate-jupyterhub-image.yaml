@@ -31,7 +31,7 @@ spec:
 
         # Check if Pip was found, if not save that information to a message
         if command -v pip >/dev/null; then
-           echo -n $(pip list --disable-pip-version-check --not-required --format json) > $(workspaces.data.path)/notebook-python-dependencies.json
+           pip list --disable-pip-version-check --not-required --format json | sed 's/\}/, "visible": true\}/g' > $(workspaces.data.path)/notebook-python-dependencies.json
            echo -n  "    Packages:   "
            echo $(pip list --disable-pip-version-check --not-required --format=freeze)
         else
