@@ -39,7 +39,7 @@ spec:
             echo
             echo "  Creator:           $(params.creator)"
             echo "  Phase:             Validating"
-            echo "  Message:           ''"
+            echo "  Messages:          ''"
             echo "  Visibility:        false"
             echo "  Origin:            Admin"
             echo
@@ -51,7 +51,7 @@ spec:
             metadata:
               annotations:
                 opendatahub.io/notebook-image-desc: $(params.desc)
-                opendatahub.io/notebook-image-message: ''
+                opendatahub.io/notebook-image-messages: ''
                 opendatahub.io/notebook-image-name: $(params.name)
                 opendatahub.io/notebook-image-phase: Validating
                 opendatahub.io/notebook-image-url: $(params.url)
@@ -156,7 +156,7 @@ spec:
             echo
             echo "  Image tag:           $IMAGE_TAG"
             echo "  Phase:               $PHASE"
-            echo "  Message:             $MESSAGES"
+            echo "  Messages:            $MESSAGES"
             echo "  Visibility:          $VISIBLE"
             echo "  Software:            $NOTEBOOK_SOFTWARE"
             echo "  Python dependencies: $NOTEBOOK_PYTHON_DEPENDENCIES"
@@ -165,7 +165,7 @@ spec:
             cat <<EOM > patch-file.yaml
             metadata:
               annotations:
-                opendatahub.io/notebook-image-message: |
+                opendatahub.io/notebook-image-messages: |
                   $MESSAGES
                 opendatahub.io/notebook-image-phase: "$PHASE"
             EOM
