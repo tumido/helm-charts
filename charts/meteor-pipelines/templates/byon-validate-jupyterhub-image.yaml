@@ -19,25 +19,45 @@ spec:
         # Check Python version
         echo  "Analyzing image:"
 
+        touch /tmp/notebook-software.ndjson
+
         # Check if Python was found, if not save that information to a message
         if command -v python >/dev/null; then
           version=$(python --version | cut -d ' ' -f 2)
-          echo -n  "[{\"name\":\"Python\",\"version\":\"$version\"}]" > $(workspaces.data.path)/notebook-software.json
-          echo  "    Python:     $version"
+          echo "{\"name\":\"Python\",\"version\":\"$version\"}" >> /tmp/notebook-software.ndjson
+          echo "    Python:             $version"
         else
-           echo "    Python:     Not available"
-           echo "{\"severity\":\"error\",\"message\":\"Python not found\"}" >> $(workspaces.data.path)/messages.ndjson
+          echo "    Python:             Not available"
+          echo "{\"severity\":\"error\",\"message\":\"Python not found\"}" >> $(workspaces.data.path)/messages.ndjson
         fi
 
         # Check if Pip was found, if not save that information to a message
         if command -v pip >/dev/null; then
-           pip list --disable-pip-version-check --not-required --format json | sed 's/\}/, "visible": true\}/g' > $(workspaces.data.path)/notebook-python-dependencies.json
-           echo -n  "    Packages:   "
-           echo $(pip list --disable-pip-version-check --not-required --format=freeze)
+          pip list --disable-pip-version-check --not-required --format json | sed 's/\}/, "visible": true\}/g' > $(workspaces.data.path)/notebook-python-dependencies.json
+          echo -n "    Python packages:    "
+          echo $(pip list --disable-pip-version-check --not-required --format=freeze)
         else
-           echo "    Packages:   Not available"
-           echo "{\"severity\":\"error\",\"message\":\"Pip not found\"}" >> $(workspaces.data.path)/messages.ndjson
+          echo "    Python packages:    Not available"
+          echo "{\"severity\":\"error\",\"message\":\"Pip not found\"}" >> $(workspaces.data.path)/messages.ndjson
         fi
+
+        if command -v R >/dev/null; then
+          version=$(R --version | head -1 | cut -d" " -f3)
+          echo "{\"name\":\"R\",\"version\":\"$version\"}" >> /tmp/notebook-software.ndjson
+          echo  "    R (optional):       $version"
+        else
+          echo  "    R (optional):       Not available"
+        fi
+
+        if command -v rstudio-server >/dev/null; then
+          version=$(rstudio-server version | cut -d"+" -f1)
+          echo "{\"name\":\"RStudio\",\"version\":\"$version\"}" >> /tmp/notebook-software.ndjson
+          echo  "    RStudio (optional): $version"
+        else
+          echo  "    RStudio (optional): Not available"
+        fi
+
+        echo -n "[$(sed ':a;N;$!ba;s/\n/,/g' /tmp/notebook-software.ndjson)]" > $(workspaces.data.path)/notebook-software.json
 
     - name: minimal-requirements
       image: $(params.url)
