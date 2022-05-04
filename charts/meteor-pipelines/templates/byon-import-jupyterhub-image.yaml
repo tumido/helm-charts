@@ -77,6 +77,7 @@ spec:
       taskSpec:
         params:
           - name: url
+            type: string
         workspaces:
           - name: data
         steps:
